@@ -3,221 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arte Generativa - Rede Neural Interativa</title>
+    <title>Zodiacus - Mapa Estelar Completo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS: Estilo e Cores */
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #0a0a12;
-            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #020205;
+            font-family: 'Cinzel', serif; color: white;
         }
+        canvas { display: block; }
 
-        canvas {
-            display: block;
+        #ui-overlay {
+            position: absolute; bottom: 40px; left: 50%;
+            transform: translateX(-50%); text-align: center;
+            pointer-events: none; transition: all 0.5s ease;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px); padding: 20px 60px;
+            border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
         }
-
-        #ui-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            pointer-events: auto;
-            user-select: none;
+        #ui-overlay.active { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+        #ui-overlay h1 { 
+            margin: 0; font-size: 32px; letter-spacing: 5px; 
+            color: #fffbdf; text-shadow: 0 0 20px rgba(255, 251, 223, 0.5);
         }
-
-        #ui-panel h1 {
-            font-size: 18px;
-            margin: 0 0 10px 0;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #4df3ff;
-        }
-
-        .control-group {
-            margin-bottom: 10px;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        input[type=range] {
-            width: 100%;
-            cursor: pointer;
-        }
-
-        button#btn-random {
-            background-color: #4df3ff;
-            color: #0a0a12;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s;
-        }
-
-        button#btn-random:hover {
-            background-color: white;
+        #ui-overlay p { margin: 5px 0 0; font-size: 14px; opacity: 0.7; letter-spacing: 2px; }
+        
+        #header {
+            position: absolute; top: 20px; width: 100%;
+            text-align: center; opacity: 0.4; letter-spacing: 3px; font-size: 12px;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="neural-canvas"></canvas>
+    <div id="header">EXPLORE O CÉU PROFUNDO</div>
+    <canvas id="starCanvas"></canvas>
 
-    <div id="ui-panel">
-        <h1>Rede Neural</h1>
-        <div class="control-group">
-            <label>Pontos: <span id="count-val"></span></label>
-            <input type="range" id="particle-count" min="50" max="350" step="10" value="150">
-        </div>
-        <div class="control-group">
-            <label>Conexão</label>
-            <input type="range" id="connection-dist" min="50" max="250" step="10" value="150">
-        </div>
-        <button id="btn-random">Cores Aleatórias</button>
+    <div id="ui-overlay">
+        <h1 id="sign-title">Signo</h1>
+        <p id="sign-date">Data do Zodíaco</p>
     </div>
 
     <script>
-        /* JAVASCRIPT: A Lógica do Sistema */
-        const canvas = document.getElementById('neural-canvas');
+        const canvas = document.getElementById('starCanvas');
         const ctx = canvas.getContext('2d');
-        const uiPanel = document.getElementById('ui-panel');
-        const particleCountInput = document.getElementById('particle-count');
-        const connectionDistInput = document.getElementById('connection-dist');
-        const countValSpan = document.getElementById('count-val');
-        const btnRandom = document.getElementById('btn-random');
+        const ui = document.getElementById('ui-overlay');
+        const signTitle = document.getElementById('sign-title');
+        const signDate = document.getElementById('sign-date');
 
-        let width, height;
-        let particles = [];
-        let mouse = { x: null, y: null, radius: 150 };
-        let particleCount = parseInt(particleCountInput.value);
-        let connectionDist = parseInt(connectionDistInput.value);
-        let colors = [{ r: 77, g: 243, b: 255 }, { r: 255, g: 0, b: 255 }, { r: 255, g: 255, b: 255 }];
+        let width, height, stars = [], mouse = { x: null, y: null, r: 80 };
 
-        countValSpan.innerText = particleCount;
+        // --- DADOS DAS ESTRELAS (Mapeamento de todos os 12 Signos) ---
+        const starsData = [
+            // Áries
+            { id: 'ar1', x: 0.15, y: 0.20 }, { id: 'ar2', x: 0.18, y: 0.25 }, { id: 'ar3', x: 0.14, y: 0.30 },
+            // Touro
+            { id: 'ta1', x: 0.35, y: 0.15 }, { id: 'ta2', x: 0.38, y: 0.22 }, { id: 'ta3', x: 0.42, y: 0.25 }, { id: 'ta4', x: 0.32, y: 0.28 },
+            // Gêmeos
+            { id: 'ge1', x: 0.55, y: 0.12 }, { id: 'ge2', x: 0.58, y: 0.14 }, { id: 'ge3', x: 0.54, y: 0.25 }, { id: 'ge4', x: 0.59, y: 0.27 },
+            // Câncer
+            { id: 'ca1', x: 0.80, y: 0.15 }, { id: 'ca2', x: 0.78, y: 0.22 }, { id: 'ca3', x: 0.82, y: 0.28 }, { id: 'ca4', x: 0.85, y: 0.20 },
+            // Leão
+            { id: 'le1', x: 0.12, y: 0.50 }, { id: 'le2', x: 0.18, y: 0.48 }, { id: 'le3', x: 0.22, y: 0.55 }, { id: 'le4', x: 0.15, y: 0.60 }, { id: 'le5', x: 0.08, y: 0.58 },
+            // Virgem
+            { id: 'vi1', x: 0.40, y: 0.55 }, { id: 'vi2', x: 0.45, y: 0.50 }, { id: 'vi3', x: 0.50, y: 0.55 }, { id: 'vi4', x: 0.48, y: 0.65 }, { id: 'vi5', x: 0.42, y: 0.68 },
+            // Libra
+            { id: 'li1', x: 0.70, y: 0.50 }, { id: 'li2', x: 0.75, y: 0.45 }, { id: 'li3', x: 0.78, y: 0.55 }, { id: 'li4', x: 0.72, y: 0.62 },
+            // Escorpião
+            { id: 'sc1', x: 0.90, y: 0.55 }, { id: 'sc2', x: 0.88, y: 0.65 }, { id: 'sc3', x: 0.92, y: 0.72 }, { id: 'sc4', x: 0.85, y: 0.75 },
+            // Sagitário
+            { id: 'sa1', x: 0.15, y: 0.85 }, { id: 'sa2', x: 0.20, y: 0.80 }, { id: 'sa3', x: 0.25, y: 0.82 }, { id: 'sa4', x: 0.22, y: 0.88 },
+            // Capricórnio
+            { id: 'cp1', x: 0.45, y: 0.85 }, { id: 'cp2', x: 0.55, y: 0.82 }, { id: 'cp3', x: 0.50, y: 0.92 },
+            // Aquário
+            { id: 'aq1', x: 0.72, y: 0.85 }, { id: 'aq2', x: 0.78, y: 0.80 }, { id: 'aq3', x: 0.82, y: 0.88 }, { id: 'aq4', x: 0.68, y: 0.92 },
+            // Peixes
+            { id: 'pi1', x: 0.92, y: 0.10 }, { id: 'pi2', x: 0.95, y: 0.25 }, { id: 'pi3', x: 0.88, y: 0.20 }
+        ];
 
-        // --- FUNÇÃO DE REDIMENSIONAMENTO (A que você pediu) ---
-        function resizeCanvas() {
+        const constellations = [
+            { name: 'Áries', date: '21 Mar - 19 Abr', links: [['ar1','ar2'],['ar2','ar3']] },
+            { name: 'Touro', date: '20 Abr - 20 Mai', links: [['ta1','ta2'],['ta2','ta3'],['ta1','ta4']] },
+            { name: 'Gêmeos', date: '21 Mai - 20 Jun', links: [['ge1','ge2'],['ge1','ge3'],['ge2','ge4']] },
+            { name: 'Câncer', date: '21 Jun - 22 Jul', links: [['ca1','ca2'],['ca2','ca3'],['ca2','ca4']] },
+            { name: 'Leão', date: '23 Jul - 22 Ago', links: [['le1','le2'],['le2','le3'],['le3','le4'],['le4','le5'],['le5','le1']] },
+            { name: 'Virgem', date: '23 Ago - 22 Set', links: [['vi1','vi2'],['vi2','vi3'],['vi3','vi4'],['vi4','vi5'],['vi5','vi1']] },
+            { name: 'Libra', date: '23 Set - 22 Out', links: [['li1','li2'],['li2','li3'],['li4','li1']] },
+            { name: 'Escorpião', date: '23 Out - 21 Nov', links: [['sc1','sc2'],['sc2','sc3'],['sc3','sc4']] },
+            { name: 'Sagitário', date: '22 Nov - 21 Dez', links: [['sa1','sa2'],['sa2','sa3'],['sa3','sa4'],['sa4','sa1']] },
+            { name: 'Capricórnio', date: '22 Dez - 19 Jan', links: [['cp1','cp2'],['cp2','cp3'],['cp3','cp1']] },
+            { name: 'Aquário', date: '20 Jan - 18 Fev', links: [['aq1','aq2'],['aq2','aq3'],['aq3','aq4']] },
+            { name: 'Peixes', date: '19 Fev - 20 Mar', links: [['pi1','pi2'],['pi2','pi3']] }
+        ];
+
+        function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
-            initParticles(); // Reinicia os pontos para cobrirem a nova área
+            stars = starsData.map(s => ({
+                ...s, px: s.x * width, py: s.y * height, 
+                o: Math.random(), spd: 0.01 + Math.random() * 0.02
+            }));
         }
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.size = Math.random() * 2 + 1;
-                this.vx = (Math.random() - 0.5) * 1.2;
-                this.vy = (Math.random() - 0.5) * 1.2;
-                this.color = colors[Math.floor(Math.random() * colors.length)];
-                this.alpha = Math.random() * 0.5 + 0.2;
-            }
+        function draw() {
+            ctx.fillStyle = '#020205'; ctx.fillRect(0, 0, width, height);
+            let activeSign = null;
 
-            draw() {
+            constellations.forEach(c => {
+                let hover = false;
+                c.links.forEach(l => {
+                    const s1 = stars.find(st => st.id === l[0]), s2 = stars.find(st => st.id === l[1]);
+                    if (mouse.x && (Math.hypot(s1.px-mouse.x, s1.py-mouse.y) < mouse.r || Math.hypot(s2.px-mouse.x, s2.py-mouse.y) < mouse.r)) hover = true;
+                });
+
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.alpha})`;
-                ctx.fill();
-            }
+                ctx.strokeStyle = hover ? 'rgba(255, 251, 223, 0.6)' : 'rgba(255, 255, 255, 0.08)';
+                ctx.lineWidth = hover ? 2 : 1;
+                if(hover) { ctx.shadowBlur = 10; ctx.shadowColor = '#fffbdf'; activeSign = c; }
+                
+                c.links.forEach(l => {
+                    const s1 = stars.find(st => st.id === l[0]), s2 = stars.find(st => st.id === l[1]);
+                    ctx.moveTo(s1.px, s1.py); ctx.lineTo(s2.px, s2.py);
+                });
+                ctx.stroke(); ctx.shadowBlur = 0;
+            });
 
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
+            stars.forEach(s => {
+                s.o += s.spd; if(s.o > 1 || s.o < 0.2) s.spd *= -1;
+                ctx.beginPath(); ctx.arc(s.px, s.py, 2, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 251, 223, ${s.o})`; ctx.fill();
+            });
 
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
+            if(activeSign) {
+                signTitle.innerText = activeSign.name; signDate.innerText = activeSign.date;
+                ui.classList.add('active');
+            } else { ui.classList.remove('active'); }
 
-                if (mouse.x !== null) {
-                    let dx = this.x - mouse.x;
-                    let dy = this.y - mouse.y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-                    if (dist < mouse.radius) {
-                        let force = (mouse.radius - dist) / mouse.radius;
-                        this.x += Math.cos(Math.atan2(dy, dx)) * force * 3;
-                        this.y += Math.sin(Math.atan2(dy, dx)) * force * 3;
-                    }
-                }
-            }
+            requestAnimationFrame(draw);
         }
 
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
-            }
-        }
-
-        function drawLines() {
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    let dx = particles[i].x - particles[j].x;
-                    let dy = particles[i].y - particles[j].y;
-                    let dist = Math.sqrt(dx*dx + dy*dy);
-
-                    if (dist < connectionDist) {
-                        let alpha = 1 - (dist / connectionDist);
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        let c = particles[i].color;
-                        ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha * 0.2})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                    }
-                }
-            }
-        }
-
-        function animate() {
-            ctx.fillStyle = 'rgba(10, 10, 18, 0.2)';
-            ctx.fillRect(0, 0, width, height);
-            particles.forEach(p => { p.update(); p.draw(); });
-            drawLines();
-            requestAnimationFrame(animate);
-        }
-
-        // Listeners
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.clientX;
-            mouse.y = e.clientY;
-        });
-        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
-
-        particleCountInput.addEventListener('input', (e) => {
-            particleCount = parseInt(e.target.value);
-            countValSpan.innerText = particleCount;
-            initParticles();
-        });
-
-        connectionDistInput.addEventListener('input', (e) => {
-            connectionDist = parseInt(e.target.value);
-        });
-
-        btnRandom.addEventListener('click', () => {
-            const getNeon = () => ({ r: Math.floor(Math.random() * 155) + 100, g: Math.floor(Math.random() * 155) + 100, b: Math.floor(Math.random() * 155) + 100 });
-            colors = [getNeon(), getNeon(), {r:255,g:255,b:255}];
-            initParticles();
-        });
-
-        resizeCanvas();
-        animate();
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        resize(); draw();
     </script>
 </body>
 </html>
