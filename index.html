@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arte Generativa - Rede Neural</title>
+    <title>Arte Generativa - Rede Neural Interativa</title>
     <style>
+        /* CSS: Estilo e Cores */
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #0a0a12; /* Fundo azul bem escuro */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0a12;
+            font-family: 'Segoe UI', sans-serif;
         }
 
         canvas {
@@ -30,7 +31,8 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            pointer-events: auto; /* Permite interagir com o painel */
+            pointer-events: auto;
+            user-select: none;
         }
 
         #ui-panel h1 {
@@ -38,13 +40,7 @@
             margin: 0 0 10px 0;
             text-transform: uppercase;
             letter-spacing: 2px;
-            color: #4df3ff; /* Ciano Neon */
-        }
-
-        #ui-panel p {
-            font-size: 12px;
-            margin: 0 0 15px 0;
-            opacity: 0.8;
+            color: #4df3ff;
         }
 
         .control-group {
@@ -76,7 +72,6 @@
 
         button#btn-random:hover {
             background-color: white;
-            box-shadow: 0 0 10px rgba(77, 243, 255, 0.7);
         }
     </style>
 </head>
@@ -86,22 +81,19 @@
 
     <div id="ui-panel">
         <h1>Rede Neural</h1>
-        <p>Arte generativa interativa. Mova o mouse.</p>
-
         <div class="control-group">
-            <label for="particle-count">Quantidade de Pontos: <span id="count-val"></span></label>
-            <input type="range" id="particle-count" min="50" max="400" step="10" value="150">
+            <label>Pontos: <span id="count-val"></span></label>
+            <input type="range" id="particle-count" min="50" max="350" step="10" value="150">
         </div>
-
         <div class="control-group">
-            <label for="connection-dist">Distância de Conexão</label>
+            <label>Conexão</label>
             <input type="range" id="connection-dist" min="50" max="250" step="10" value="150">
         </div>
-
         <button id="btn-random">Cores Aleatórias</button>
     </div>
 
     <script>
+        /* JAVASCRIPT: A Lógica do Sistema */
         const canvas = document.getElementById('neural-canvas');
         const ctx = canvas.getContext('2d');
         const uiPanel = document.getElementById('ui-panel');
@@ -110,39 +102,31 @@
         const countValSpan = document.getElementById('count-val');
         const btnRandom = document.getElementById('btn-random');
 
-        // Configurações
         let width, height;
         let particles = [];
         let mouse = { x: null, y: null, radius: 150 };
         let particleCount = parseInt(particleCountInput.value);
         let connectionDist = parseInt(connectionDistInput.value);
-        let colors = [
-            { r: 77, g: 243, b: 255 }, // Ciano Neon
-            { r: 255, g: 0, b: 255 },  // Magenta Neon
-            { r: 255, g: 255, b: 255 } // Branco
-        ];
-        let currentColorIndex = 0;
+        let colors = [{ r: 77, g: 243, b: 255 }, { r: 255, g: 0, b: 255 }, { r: 255, g: 255, b: 255 }];
 
-        // Atualiza UI
         countValSpan.innerText = particleCount;
 
-        // Redimensionar Canvas
+        // --- FUNÇÃO DE REDIMENSIONAMENTO (A que você pediu) ---
         function resizeCanvas() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
-            initParticles();
+            initParticles(); // Reinicia os pontos para cobrirem a nova área
         }
 
-        // Classe da Partícula (o Ponto)
         class Particle {
             constructor() {
                 this.x = Math.random() * width;
                 this.y = Math.random() * height;
-                this.size = Math.random() * 2 + 1; // Tamanho entre 1 e 3
-                this.vx = (Math.random() - 0.5) * 1.5; // Velocidade X
-                this.vy = (Math.random() - 0.5) * 1.5; // Velocidade Y
+                this.size = Math.random() * 2 + 1;
+                this.vx = (Math.random() - 0.5) * 1.2;
+                this.vy = (Math.random() - 0.5) * 1.2;
                 this.color = colors[Math.floor(Math.random() * colors.length)];
-                this.alpha = Math.random() * 0.5 + 0.3; // Opacidade base
+                this.alpha = Math.random() * 0.5 + 0.2;
             }
 
             draw() {
@@ -153,39 +137,25 @@
             }
 
             update() {
-                // Movimento básico
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Rebater nas bordas
                 if (this.x < 0 || this.x > width) this.vx *= -1;
                 if (this.y < 0 || this.y > height) this.vy *= -1;
 
-                // Interação com o Mouse
                 if (mouse.x !== null) {
                     let dx = this.x - mouse.x;
                     let dy = this.y - mouse.y;
                     let dist = Math.sqrt(dx*dx + dy*dy);
-
                     if (dist < mouse.radius) {
-                        // Força de atração suave
                         let force = (mouse.radius - dist) / mouse.radius;
-                        let angle = Math.atan2(dy, dx);
-                        let moveX = Math.cos(angle) * force * 2;
-                        let moveY = Math.sin(angle) * force * 2;
-
-                        this.x += moveX;
-                        this.y += moveY;
-                        this.alpha = Math.min(1, this.alpha + 0.05); // Brilha mais perto
-                    } else {
-                        // Retorna à opacidade normal
-                        if (this.alpha > 0.4) this.alpha -= 0.01;
+                        this.x += Math.cos(Math.atan2(dy, dx)) * force * 3;
+                        this.y += Math.sin(Math.atan2(dy, dx)) * force * 3;
                     }
                 }
             }
         }
 
-        // Inicializar Partículas
         function initParticles() {
             particles = [];
             for (let i = 0; i < particleCount; i++) {
@@ -193,7 +163,6 @@
             }
         }
 
-        // Desenhar Linhas (Conexões)
         function drawLines() {
             for (let i = 0; i < particles.length; i++) {
                 for (let j = i + 1; j < particles.length; j++) {
@@ -202,15 +171,12 @@
                     let dist = Math.sqrt(dx*dx + dy*dy);
 
                     if (dist < connectionDist) {
-                        // A opacidade da linha depende da distância
                         let alpha = 1 - (dist / connectionDist);
                         ctx.beginPath();
                         ctx.moveTo(particles[i].x, particles[i].y);
                         ctx.lineTo(particles[j].x, particles[j].y);
-                        
-                        // Cor da linha baseada no primeiro ponto
                         let c = particles[i].color;
-                        ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha * 0.3})`;
+                        ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, ${alpha * 0.2})`;
                         ctx.lineWidth = 0.5;
                         ctx.stroke();
                     }
@@ -218,43 +184,22 @@
             }
         }
 
-        // Loop de Animação
         function animate() {
-            // Limpa o canvas com um leve rastro (efeito de ghosting)
             ctx.fillStyle = 'rgba(10, 10, 18, 0.2)';
             ctx.fillRect(0, 0, width, height);
-
-            for (let i = 0; i < particles.length; i++) {
-                particles[i].update();
-                particles[i].draw();
-            }
-
+            particles.forEach(p => { p.update(); p.draw(); });
             drawLines();
-
             requestAnimationFrame(animate);
         }
 
-        // Eventos
+        // Listeners
         window.addEventListener('resize', resizeCanvas);
-
         window.addEventListener('mousemove', (e) => {
-            // Verifica se o mouse está sobre o painel para não atrapalhar
-            let rect = uiPanel.getBoundingClientRect();
-            if (e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom) {
-                mouse.x = null;
-                mouse.y = null;
-            } else {
-                mouse.x = e.clientX;
-                mouse.y = e.clientY;
-            }
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
         });
+        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
 
-        window.addEventListener('mouseout', () => {
-            mouse.x = null;
-            mouse.y = null;
-        });
-
-        // Controles da UI
         particleCountInput.addEventListener('input', (e) => {
             particleCount = parseInt(e.target.value);
             countValSpan.innerText = particleCount;
@@ -266,22 +211,13 @@
         });
 
         btnRandom.addEventListener('click', () => {
-            // Gera um novo set de cores neon
-            function getNeon() {
-                return {
-                    r: Math.floor(Math.random() * 155) + 100,
-                    g: Math.floor(Math.random() * 155) + 100,
-                    b: Math.floor(Math.random() * 155) + 100
-                };
-            }
+            const getNeon = () => ({ r: Math.floor(Math.random() * 155) + 100, g: Math.floor(Math.random() * 155) + 100, b: Math.floor(Math.random() * 155) + 100 });
             colors = [getNeon(), getNeon(), {r:255,g:255,b:255}];
-            initParticles(); // Reinicia para aplicar as cores
+            initParticles();
         });
 
-        // Início
         resizeCanvas();
         animate();
-
     </script>
 </body>
 </html>
