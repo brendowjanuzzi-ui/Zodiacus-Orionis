@@ -1,51 +1,36 @@
-# 🌌 Zodiacus Orionis: Galáxia Interativa
+# 🌌 Zodiacus Orionis
 
-![Licença: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-![Status: Completo](https://img.shields.io/badge/Status-Completo-success.svg)
-![Tecnologia: HTML5/JS](https://img.shields.io/badge/Tecnologia-HTML5%20%2F%20JS-F7DF1E.svg)
-
-**Zodiacus Orionis** é uma simulação astronômica interativa desenvolvida com **JavaScript Vanilla** e **HTML5 Canvas**. O projeto evoluiu de uma rede neural simples para um mapa estelar onde 12 constelações e um sistema solar coexistem em movimento perpétuo.
+Uma simulação astronômica interativa e generativa que transforma o navegador em um observatório espacial. O projeto combina **Canvas API** e **Trigonometria** para criar um mapa estelar dinâmico com os 12 signos do zodíaco e um sistema planetário orbital.
 
 ---
 
-## ✨ Demonstração Visual
+## 🚀 [EXPLORAR A GALÁXIA (DEMO AO VIVO)](https://brendowjanuzzi-ui.github.io/zodiacus-orionis/)
 
-> **Nota:** Se você renomeou o repositório, certifique-se de que o link abaixo aponta para o novo nome da sua branch no GitHub Pages.
-
-[-> Clique aqui para navegar pelas estrelas! <-](https://brendowjanuzzi-ui.github.io/zodiacus-orionis/)
-
-<p align="center">
-  <img src="demo-neural.gif" alt="Demonstração do Zodiacus Orionis" width="100%" style="border-radius: 15px;">
-</p>
+> **Instruções:** Passe o mouse sobre as estrelas para iluminar as constelações e revelar os nomes dos signos. Observe o movimento orbital dos planetas ao redor do sol central.
 
 ---
 
-## 🚀 Funcionalidades Principais
+## ✨ Destaques do Projeto
 
-* **12 Constelações do Zodíaco:** Mapeamento completo das silhuetas de todos os signos, de Áries a Peixes.
-* **Mecânica de "Drifting":** As constelações flutuam organicamente pelo espaço, rebatendo suavemente nas bordas da tela.
-* **Sistema Solar Orbital:** Simulação de planetas com órbitas elípticas e inclinação 3D.
-* **Interatividade Reativa:** Ao passar o mouse, as constelações se iluminam, revelam seus nomes e preenchem suas formas com auras coloridas.
-* **Nuvem Estelar de Fundo:** Fundo gerado proceduralmente com centenas de estrelas para profundidade visual.
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-* **HTML5 Canvas:** Renderização gráfica de alta performance.
-* **JavaScript (ES6+):** Lógica de animação e cálculos trigonométricos (Seno e Cosseno).
-* **CSS3:** Estilização e tipografia clássica via Google Fonts (`Cinzel`).
+* **12 Constelações Reais:** Mapeamento de silhuetas e polígonos para cada signo do zodíaco.
+* **Mecânica de Orbitagem:** Planetas com velocidades e trajetórias elípticas calculadas em tempo real.
+* **Interatividade (Plexus Effect):** Brilho reativo e preenchimento de aura colorida ao interagir com o mouse.
+* **Drift Espacial:** Sistema de movimentação constante que garante uma arte generativa única a cada segundo.
+* **Céu Profundo:** Fundo processual com centenas de estrelas cintilantes para maior imersão.
 
 ---
 
-## 📁 Como rodar o projeto
+## 🛠️ Tecnologias e Conceitos
 
-1.  Clone este repositório:
-    ```bash
-    git clone [https://github.com/brendowjanuzzi-ui/zodiacus-orionis.git](https://github.com/brendowjanuzzi-ui/zodiacus-orionis.git)
-    ```
-2.  Abra o arquivo `index.html` em qualquer navegador moderno.
+* **Linguagem:** JavaScript (Vanilla ES6+).
+* **Gráficos:** HTML5 Canvas API (Renderização de alto desempenho).
+* **Matemática:** Cálculos de Seno e Cosseno para órbitas e vetores de velocidade para o drift.
+* **Estilização:** Tipografia clássica via Google Fonts (`Cinzel`).
 
 ---
 
-Desenvolvido com 💜 por **Brendow Januzzi**
+## 📁 Como Executar Localmente
+
+1. Clone o repositório:
+   ```bash
+   git clone [https://github.com/brendowjanuzzi-ui/zodiacus-orionis.git](https://github.com/brendowjanuzzi-ui/zodiacus-orionis.git)
