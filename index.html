@@ -3,41 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zodiacus - Mapa Estelar Completo</title>
+    <title>Zodiacus - Galáxia à Deriva</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #020205;
+            overflow: hidden; background-color: #010103; /* Espaço ainda mais profundo */
             font-family: 'Cinzel', serif; color: white;
+            user-select: none; /* Impede seleção de texto acidental */
         }
         canvas { display: block; }
 
         #ui-overlay {
             position: absolute; bottom: 40px; left: 50%;
             transform: translateX(-50%); text-align: center;
-            pointer-events: none; transition: all 0.5s ease;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px); padding: 20px 60px;
-            border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.1);
-            opacity: 0;
+            pointer-events: none; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(15px); padding: 25px 70px;
+            border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.08);
+            opacity: 0; box-shadow: 0 15px 35px rgba(0,0,0,0.8);
         }
-        #ui-overlay.active { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+        #ui-overlay.active { opacity: 1; transform: translateX(-50%) translateY(-15px); }
         #ui-overlay h1 { 
-            margin: 0; font-size: 32px; letter-spacing: 5px; 
-            color: #fffbdf; text-shadow: 0 0 20px rgba(255, 251, 223, 0.5);
+            margin: 0; font-size: 36px; letter-spacing: 6px; 
+            color: #fffbdf; text-shadow: 0 0 25px rgba(255, 251, 223, 0.6);
+            text-transform: uppercase;
         }
-        #ui-overlay p { margin: 5px 0 0; font-size: 14px; opacity: 0.7; letter-spacing: 2px; }
+        #ui-overlay p { margin: 8px 0 0; font-size: 15px; opacity: 0.7; letter-spacing: 3px; font-style: italic; }
         
-        #header {
+        #hint {
             position: absolute; top: 20px; width: 100%;
-            text-align: center; opacity: 0.4; letter-spacing: 3px; font-size: 12px;
+            text-align: center; opacity: 0.3; letter-spacing: 4px; font-size: 12px;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
 
-    <div id="header">EXPLORE O CÉU PROFUNDO</div>
+    <div id="hint">A Galáxia está à deriva. Mova o mouse.</div>
     <canvas id="starCanvas"></canvas>
 
     <div id="ui-overlay">
@@ -52,9 +55,10 @@
         const signTitle = document.getElementById('sign-title');
         const signDate = document.getElementById('sign-date');
 
-        let width, height, stars = [], mouse = { x: null, y: null, r: 80 };
+        let width, height, stars = [], mouse = { x: null, y: null, r: 120 };
 
         // --- DADOS DAS ESTRELAS (Mapeamento de todos os 12 Signos) ---
+        // Adicionando um fator de velocidade aleatória para cada estrela
         const starsData = [
             // Áries
             { id: 'ar1', x: 0.15, y: 0.20 }, { id: 'ar2', x: 0.18, y: 0.25 }, { id: 'ar3', x: 0.14, y: 0.30 },
@@ -100,41 +104,85 @@
         function resize() {
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
+            // Inicializa estrelas com posições físicas, velocidades de drift e cintilação
             stars = starsData.map(s => ({
-                ...s, px: s.x * width, py: s.y * height, 
-                o: Math.random(), spd: 0.01 + Math.random() * 0.02
+                ...s, 
+                px: s.x * width, py: s.y * height, // Posição em pixels
+                vx: (Math.random() - 0.5) * 0.15, // Velocidade de drift X (muito lenta)
+                vy: (Math.random() - 0.5) * 0.15, // Velocidade de drift Y
+                o: Math.random(), spd: 0.005 + Math.random() * 0.01 // Cintilação
             }));
         }
 
         function draw() {
-            ctx.fillStyle = '#020205'; ctx.fillRect(0, 0, width, height);
+            // Fundo preto puro, com um rastro de luz muito leve para suavizar o movimento
+            ctx.fillStyle = 'rgba(1, 1, 3, 0.2)'; 
+            ctx.fillRect(0, 0, width, height);
+            
             let activeSign = null;
 
+            // 1. Desenhar Constelações e Lógica de Interação
             constellations.forEach(c => {
                 let hover = false;
+                // Verifica se o mouse está perto de qualquer estrela da constelação
                 c.links.forEach(l => {
                     const s1 = stars.find(st => st.id === l[0]), s2 = stars.find(st => st.id === l[1]);
                     if (mouse.x && (Math.hypot(s1.px-mouse.x, s1.py-mouse.y) < mouse.r || Math.hypot(s2.px-mouse.x, s2.py-mouse.y) < mouse.r)) hover = true;
                 });
 
                 ctx.beginPath();
-                ctx.strokeStyle = hover ? 'rgba(255, 251, 223, 0.6)' : 'rgba(255, 255, 255, 0.08)';
-                ctx.lineWidth = hover ? 2 : 1;
-                if(hover) { ctx.shadowBlur = 10; ctx.shadowColor = '#fffbdf'; activeSign = c; }
+                // Estilo da linha (brilha se houver hover)
+                ctx.strokeStyle = hover ? 'rgba(255, 251, 223, 0.8)' : 'rgba(255, 255, 255, 0.04)';
+                ctx.lineWidth = hover ? 2.5 : 0.8;
                 
+                if(hover) { 
+                    ctx.shadowBlur = 20; ctx.shadowColor = '#fffbdf'; 
+                    activeSign = c; 
+                }
+                
+                // Desenha as linhas entre os pontos
                 c.links.forEach(l => {
                     const s1 = stars.find(st => st.id === l[0]), s2 = stars.find(st => st.id === l[1]);
                     ctx.moveTo(s1.px, s1.py); ctx.lineTo(s2.px, s2.py);
                 });
-                ctx.stroke(); ctx.shadowBlur = 0;
+                ctx.stroke(); ctx.shadowBlur = 0; // Reseta o shadow
             });
 
+            // 2. Atualizar Posição e Desenhar Estrelas
             stars.forEach(s => {
+                // Efeito de Drifting (as constelações flutuam sozinhas)
+                s.px += s.vx;
+                s.py += s.vy;
+
+                // Efeito de Rebote (Screen Bouncing)
+                if (s.px < 50 || s.px > width - 50) s.vx *= -1;
+                if (s.py < 50 || s.py > height - 100) s.vy *= -1;
+
+                // Interação Plexus (O mouse distorce suavemente a rede neural)
+                if (mouse.x !== null) {
+                    let dx = s.px - mouse.x;
+                    let dy = s.py - mouse.y;
+                    let dist = Math.hypot(dx, dy);
+                    if (dist < mouse.r) {
+                        let force = (mouse.r - dist) / mouse.r;
+                        let angle = Math.atan2(dy, dx);
+                        // Atração suave
+                        s.px -= Math.cos(angle) * force * 1.5;
+                        s.py -= Math.sin(angle) * force * 1.5;
+                    }
+                }
+
+                // Cintilação
                 s.o += s.spd; if(s.o > 1 || s.o < 0.2) s.spd *= -1;
-                ctx.beginPath(); ctx.arc(s.px, s.py, 2, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255, 251, 223, ${s.o})`; ctx.fill();
+                
+                // Desenha o ponto
+                ctx.beginPath(); 
+                ctx.arc(s.px, s.py, 2.2, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 251, 223, ${s.o})`; // Dourado pálido
+                ctx.fill();
             });
 
+            // 3. Atualizar a UI
             if(activeSign) {
                 signTitle.innerText = activeSign.name; signDate.innerText = activeSign.date;
                 ui.classList.add('active');
@@ -143,8 +191,13 @@
             requestAnimationFrame(draw);
         }
 
+        // Eventos
         window.addEventListener('resize', resize);
         window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        // Limpa o mouse quando sai da tela
+        window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+
+        // Início
         resize(); draw();
     </script>
 </body>
